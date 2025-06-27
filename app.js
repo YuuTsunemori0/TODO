@@ -41,6 +41,10 @@ function createTaskElement(task) {
     const textSpan = document.createElement('span');
     textSpan.className = 'text';
     textSpan.textContent = task.text;
+    textSpan.addEventListener('click', e => {
+        e.stopPropagation();
+        startEditing(task, textSpan);
+    });
 
     const dueSpan = document.createElement('span');
     dueSpan.className = 'due-date';
@@ -217,6 +221,18 @@ addTaskBtn.addEventListener('click', () => {
         taskInput.value = '';
         saveTasks();
         renderTasks(currentFilter);
+    }
+});
+
+taskInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        const text = taskInput.value.trim();
+        if (text) {
+            tasks.push({ text, completed: false, tags: [], dueDate: '' });
+            taskInput.value = '';
+            saveTasks();
+            renderTasks(currentFilter);
+        }
     }
 });
 
