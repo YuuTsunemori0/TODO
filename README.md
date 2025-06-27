@@ -6,7 +6,9 @@ This project is a simple to-do list web application.
 - Add new tasks using the input field and "Add" button.
 - Check tasks to mark them completed.
 - Delete tasks using the trash button.
-- Edit a task by clicking its text.
+- Edit a task using the ✏️ button.
+- Add colored tags to tasks.
+- Set optional due dates with a calendar picker.
 - Filter tasks by status: all, to-do or completed.
 - Tasks are stored in `localStorage` so they persist after the browser is closed.
 
