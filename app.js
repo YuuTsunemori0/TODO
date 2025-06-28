@@ -12,6 +12,17 @@ const addNewTagBtn = document.getElementById('add-new-tag');
 
 let newTags = [];
 
+// Firebase configuration (replace with your project's settings)
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID"
+};
+
+// Initialize Firebase and Firestore
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 addNewTagBtn.addEventListener('click', e => {
     e.stopPropagation();
     openNewTagSelector();
@@ -23,11 +34,11 @@ toggleOptionsBtn.addEventListener('click', () => {
     optionsDiv.classList.toggle('hidden');
 });
 
-// Load tasks from localStorage
-function loadTasks() {
-    const stored = localStorage.getItem('tasks');
-    if (stored) {
-        tasks = JSON.parse(stored);
+// Load tasks from Firestore
+async function loadTasks() {
+    const doc = await db.collection('app').doc('tasks').get();
+    if (doc.exists) {
+        tasks = doc.data().items || [];
     }
     tasks.forEach(t => {
         if (!t.tags) t.tags = [];
@@ -43,7 +54,7 @@ function saveTasks() {
         const { editing, ...rest } = t;
         return rest;
     });
-    localStorage.setItem('tasks', JSON.stringify(data));
+    return db.collection('app').doc('tasks').set({ items: data });
 }
 
 function getPriorityInfo(level) {
@@ -470,5 +481,6 @@ filterButtons.forEach(btn => {
     });
 });
 
-loadTasks();
-renderTasks();
+loadTasks().then(() => {
+    renderTasks();
+});
