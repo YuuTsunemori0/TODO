@@ -12,16 +12,57 @@ const addNewTagBtn = document.getElementById('add-new-tag');
 
 let newTags = [];
 
-// Firebase configuration 
-const firebaseConfig = {
-    apiKey: "AIzaSyAhvBttl3n7SqU9rDeGIZTrdspnwoVm6f4",
-    authDomain: "to-do-list-d31a1.firebaseapp.com",
-    projectId: "to-do-list-d31a1"
+// Firebase
+import { auth, db } from './firebaseConfig.js';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+let currentUser = null;
+
+// Authentication
+window.signUp = async function () {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert('Compte créé !');
+    } catch (error) {
+        alert(error.message);
+    }
 };
 
-// Initialize Firebase and Firestore
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+window.login = async function () {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert('Connecté !');
+    } catch (error) {
+        alert(error.message);
+    }
+};
+
+window.logout = async function () {
+    await signOut(auth);
+    alert('Déconnecté !');
+};
+
+onAuthStateChanged(auth, async user => {
+    if (user) {
+        currentUser = user;
+        await loadTasks();
+        renderTasks(currentFilter);
+    } else {
+        currentUser = null;
+        tasks = [];
+        renderTasks(currentFilter);
+    }
+});
 
 addNewTagBtn.addEventListener('click', e => {
     e.stopPropagation();
@@ -34,11 +75,14 @@ toggleOptionsBtn.addEventListener('click', () => {
     optionsDiv.classList.toggle('hidden');
 });
 
-// Load tasks from Firestore
+// Load tasks for the current user from Firestore
 async function loadTasks() {
-    const doc = await db.collection('app').doc('tasks').get();
-    if (doc.exists) {
-        tasks = doc.data().items || [];
+    if (!currentUser) return;
+    const snap = await getDoc(doc(db, 'users', currentUser.uid));
+    if (snap.exists()) {
+        tasks = snap.data().items || [];
+    } else {
+        tasks = [];
     }
     tasks.forEach(t => {
         if (!t.tags) t.tags = [];
@@ -50,11 +94,12 @@ async function loadTasks() {
 }
 
 function saveTasks() {
+    if (!currentUser) return Promise.resolve();
     const data = tasks.map(t => {
         const { editing, ...rest } = t;
         return rest;
     });
-    return db.collection('app').doc('tasks').set({ items: data });
+    return setDoc(doc(db, 'users', currentUser.uid), { items: data });
 }
 
 function getPriorityInfo(level) {
@@ -481,6 +526,3 @@ filterButtons.forEach(btn => {
     });
 });
 
-loadTasks().then(() => {
-    renderTasks();
-});
