@@ -14,9 +14,9 @@ let newTags = [];
 
 // Firebase configuration (replace with your project's settings)
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID"
+    apiKey: "AIzaSyAhvBttl3n7SqU9rDeGIZTrdspnwoVm6f4",
+    authDomain: "to-do-list-d31a1.firebaseapp.com",
+    projectId: "to-do-list-d31a1"
 };
 
 // Initialize Firebase and Firestore
