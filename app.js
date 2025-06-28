@@ -14,11 +14,16 @@ function loadTasks() {
     tasks.forEach(t => {
         if (!t.tags) t.tags = [];
         if (!t.dueDate) t.dueDate = '';
+        t.editing = false;
     });
 }
 
 function saveTasks() {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
+    const data = tasks.map(t => {
+        const { editing, ...rest } = t;
+        return rest;
+    });
+    localStorage.setItem('tasks', JSON.stringify(data));
 }
 
 function createTaskElement(task) {
@@ -38,13 +43,37 @@ function createTaskElement(task) {
         renderTasks(currentFilter);
     });
 
-    const textSpan = document.createElement('span');
-    textSpan.className = 'text';
-    textSpan.textContent = task.text;
-    textSpan.addEventListener('click', e => {
-        e.stopPropagation();
-        startEditing(task, textSpan);
-    });
+    let textSpan;
+    if (task.editing) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'edit-input';
+        input.value = task.text;
+        const finishEditing = () => {
+            task.text = input.value.trim();
+            task.editing = false;
+            saveTasks();
+            renderTasks(currentFilter);
+        };
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                finishEditing();
+            } else if (e.key === 'Escape') {
+                task.editing = false;
+                renderTasks(currentFilter);
+            }
+        });
+        input.addEventListener('blur', finishEditing);
+        textSpan = input;
+    } else {
+        textSpan = document.createElement('span');
+        textSpan.className = 'text';
+        textSpan.textContent = task.text;
+        textSpan.addEventListener('click', e => {
+            e.stopPropagation();
+            startEditing(task);
+        });
+    }
 
     const dueSpan = document.createElement('span');
     dueSpan.className = 'due-date';
@@ -64,7 +93,7 @@ function createTaskElement(task) {
     editBtn.textContent = '✏️';
     editBtn.addEventListener('click', e => {
         e.stopPropagation();
-        startEditing(task, textSpan);
+        startEditing(task);
     });
 
     const tagBtn = document.createElement('button');
@@ -93,7 +122,8 @@ function createTaskElement(task) {
         renderTasks(currentFilter);
     });
 
-    actions.append(editBtn, tagBtn, dateBtn, deleteBtn);
+    if (!task.editing) actions.append(editBtn);
+    actions.append(tagBtn, dateBtn, deleteBtn);
 
     li.appendChild(header);
     li.appendChild(tagsDiv);
@@ -105,25 +135,12 @@ function createTaskElement(task) {
     return li;
 }
 
-function startEditing(task, textSpan) {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = task.text;
-    input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-            finishEditing();
-        } else if (e.key === 'Escape') {
-            renderTasks(currentFilter);
-        }
-    });
-    const finishEditing = () => {
-        task.text = input.value.trim();
-        saveTasks();
-        renderTasks(currentFilter);
-    };
-    input.addEventListener('blur', finishEditing);
-    textSpan.replaceWith(input);
-    input.focus();
+function startEditing(task) {
+    tasks.forEach(t => t.editing = false);
+    task.editing = true;
+    renderTasks(currentFilter);
+    const input = taskList.querySelector('.edit-input');
+    if (input) input.focus();
 }
 
 function addTagElement(tag, container, task) {
@@ -212,12 +229,14 @@ function renderTasks(filter = 'all') {
     filterButtons.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.filter === filter);
     });
+    const input = taskList.querySelector('.edit-input');
+    if (input) input.focus();
 }
 
 addTaskBtn.addEventListener('click', () => {
     const text = taskInput.value.trim();
     if (text) {
-        tasks.push({ text, completed: false, tags: [], dueDate: '' });
+        tasks.push({ text, completed: false, tags: [], dueDate: '', editing: false });
         taskInput.value = '';
         saveTasks();
         renderTasks(currentFilter);
@@ -228,7 +247,7 @@ taskInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
         const text = taskInput.value.trim();
         if (text) {
-            tasks.push({ text, completed: false, tags: [], dueDate: '' });
+            tasks.push({ text, completed: false, tags: [], dueDate: '', editing: false });
             taskInput.value = '';
             saveTasks();
             renderTasks(currentFilter);
