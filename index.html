@@ -17,6 +17,14 @@
         <button id="toggle-options" class="options-btn">More Options</button>
         <div id="task-options" class="options hidden">
             <textarea id="new-description" placeholder="Description"></textarea>
+            <select id="new-priority">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+            <div id="new-tags" class="tags"></div>
+            <button id="add-new-tag" class="tag-btn">+ Tag</button>
+            <input type="date" id="new-due-date">
         </div>
         <div class="filters">
             <button data-filter="all" class="filter active">All</button>
