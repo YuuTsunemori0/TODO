@@ -93,14 +93,6 @@ function createTaskElement(task) {
     const actions = document.createElement('div');
     actions.className = 'actions';
 
-    const editBtn = document.createElement('button');
-    editBtn.className = 'edit-btn';
-    editBtn.textContent = '✏️';
-    editBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        startEditing(task);
-    });
-
     const tagBtn = document.createElement('button');
     tagBtn.className = 'tag-btn';
     tagBtn.textContent = '+ Tag';
@@ -127,7 +119,6 @@ function createTaskElement(task) {
         renderTasks(currentFilter);
     });
 
-    if (!task.editing) actions.append(editBtn);
     actions.append(tagBtn, dateBtn, deleteBtn);
 
     li.appendChild(header);
