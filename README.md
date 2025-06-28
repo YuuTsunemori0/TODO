@@ -6,7 +6,7 @@ This project is a simple to-do list web application.
 - Add new tasks using the input field and "Add" button or by pressing Enter.
 - Check tasks to mark them completed.
 - Delete tasks using the trash button.
-- Edit a task using the ✏️ button or by clicking its label.
+- Edit a task by clicking its label.
 - Add colored tags to tasks.
 - Set optional due dates with a calendar picker.
 - Filter tasks by status: all, to-do or completed.
