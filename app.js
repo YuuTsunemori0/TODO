@@ -5,6 +5,17 @@ const filterButtons = document.querySelectorAll('.filter');
 const toggleOptionsBtn = document.getElementById('toggle-options');
 const optionsDiv = document.getElementById('task-options');
 const newDescription = document.getElementById('new-description');
+const newPriority = document.getElementById('new-priority');
+const newDueDate = document.getElementById('new-due-date');
+const newTagsDiv = document.getElementById('new-tags');
+const addNewTagBtn = document.getElementById('add-new-tag');
+
+let newTags = [];
+
+addNewTagBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    openNewTagSelector();
+});
 
 let tasks = [];
 
@@ -308,6 +319,86 @@ function openDatePicker(task, span) {
     input.focus();
 }
 
+function updateNewTagDisplay() {
+    newTagsDiv.innerHTML = '';
+    newTags.forEach(tag => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.style.background = tag.color;
+        span.textContent = tag.label;
+        const remove = document.createElement('span');
+        remove.className = 'remove-tag';
+        remove.textContent = '×';
+        remove.addEventListener('click', () => {
+            newTags = newTags.filter(t => t !== tag);
+            updateNewTagDisplay();
+        });
+        span.appendChild(remove);
+        newTagsDiv.appendChild(span);
+    });
+}
+
+function openNewTagSelector() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tag-selector';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Tag';
+    const color = document.createElement('input');
+    color.type = 'color';
+    const add = document.createElement('button');
+    add.textContent = 'Add';
+    const suggestions = document.createElement('div');
+    suggestions.className = 'tag-suggestions';
+
+    const usedTags = {};
+    tasks.forEach(t => {
+        t.tags.forEach(tag => {
+            if (!usedTags[tag.label]) usedTags[tag.label] = tag.color;
+        });
+    });
+
+    const finish = () => {
+        const label = input.value.trim();
+        if (label) {
+            newTags.push({ label, color: color.value });
+            updateNewTagDisplay();
+        }
+        wrapper.remove();
+    };
+    add.addEventListener('click', finish);
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') finish();
+        if (e.key === 'Escape') wrapper.remove();
+    });
+
+    function updateSuggestions() {
+        suggestions.innerHTML = '';
+        const text = input.value.trim().toLowerCase();
+        if (!text) return;
+        Object.entries(usedTags).forEach(([label, col]) => {
+            if (label.toLowerCase().startsWith(text)) {
+                const item = document.createElement('div');
+                item.className = 'suggestion';
+                item.textContent = label;
+                item.style.background = col;
+                item.addEventListener('click', () => {
+                    input.value = label;
+                    color.value = col;
+                    finish();
+                });
+                suggestions.appendChild(item);
+            }
+        });
+    }
+
+    input.addEventListener('input', updateSuggestions);
+
+    wrapper.append(input, color, add, suggestions);
+    newTagsDiv.appendChild(wrapper);
+    input.focus();
+}
+
 function renderTasks(filter = 'all') {
     taskList.innerHTML = '';
     tasks.forEach(task => {
@@ -329,14 +420,18 @@ addTaskBtn.addEventListener('click', () => {
         tasks.push({
             text,
             completed: false,
-            tags: [],
-            dueDate: '',
+            tags: [...newTags],
+            dueDate: newDueDate.value,
             description: newDescription.value.trim(),
-            priority: 'low',
+            priority: newPriority.value,
             editing: false
         });
         taskInput.value = '';
         newDescription.value = '';
+        newPriority.value = 'low';
+        newDueDate.value = '';
+        newTags = [];
+        updateNewTagDisplay();
         saveTasks();
         renderTasks(currentFilter);
     }
@@ -349,14 +444,18 @@ taskInput.addEventListener('keydown', e => {
             tasks.push({
                 text,
                 completed: false,
-                tags: [],
-                dueDate: '',
+                tags: [...newTags],
+                dueDate: newDueDate.value,
                 description: newDescription.value.trim(),
-                priority: 'low',
+                priority: newPriority.value,
                 editing: false
             });
             taskInput.value = '';
             newDescription.value = '';
+            newPriority.value = 'low';
+            newDueDate.value = '';
+            newTags = [];
+            updateNewTagDisplay();
             saveTasks();
             renderTasks(currentFilter);
         }
