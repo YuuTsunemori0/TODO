@@ -63,7 +63,12 @@ function createTaskElement(task) {
                 renderTasks(currentFilter);
             }
         });
-        input.addEventListener('blur', finishEditing);
+        input.addEventListener('blur', e => {
+            // Only finish editing if the newly focused element is outside this task
+            if (!li.contains(e.relatedTarget)) {
+                finishEditing();
+            }
+        });
         textSpan = input;
     } else {
         textSpan = document.createElement('span');
