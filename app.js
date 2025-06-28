@@ -168,6 +168,16 @@ function openTagSelector(task, container) {
     color.type = 'color';
     const add = document.createElement('button');
     add.textContent = 'Add';
+    const suggestions = document.createElement('div');
+    suggestions.className = 'tag-suggestions';
+
+    const usedTags = {};
+    tasks.forEach(t => {
+        t.tags.forEach(tag => {
+            if (!usedTags[tag.label]) usedTags[tag.label] = tag.color;
+        });
+    });
+
     const finish = () => {
         const label = input.value.trim();
         if (label) {
@@ -182,7 +192,30 @@ function openTagSelector(task, container) {
         if (e.key === 'Enter') finish();
         if (e.key === 'Escape') wrapper.remove();
     });
-    wrapper.append(input, color, add);
+
+    function updateSuggestions() {
+        suggestions.innerHTML = '';
+        const text = input.value.trim().toLowerCase();
+        if (!text) return;
+        Object.entries(usedTags).forEach(([label, col]) => {
+            if (label.toLowerCase().startsWith(text)) {
+                const item = document.createElement('div');
+                item.className = 'suggestion';
+                item.textContent = label;
+                item.style.background = col;
+                item.addEventListener('click', () => {
+                    input.value = label;
+                    color.value = col;
+                    finish();
+                });
+                suggestions.appendChild(item);
+            }
+        });
+    }
+
+    input.addEventListener('input', updateSuggestions);
+
+    wrapper.append(input, color, add, suggestions);
     container.appendChild(wrapper);
     input.focus();
 }
