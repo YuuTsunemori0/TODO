@@ -2,8 +2,15 @@ const taskInput = document.getElementById('new-task');
 const addTaskBtn = document.getElementById('add-task');
 const taskList = document.getElementById('task-list');
 const filterButtons = document.querySelectorAll('.filter');
+const toggleOptionsBtn = document.getElementById('toggle-options');
+const optionsDiv = document.getElementById('task-options');
+const newDescription = document.getElementById('new-description');
 
 let tasks = [];
+
+toggleOptionsBtn.addEventListener('click', () => {
+    optionsDiv.classList.toggle('hidden');
+});
 
 // Load tasks from localStorage
 function loadTasks() {
@@ -14,6 +21,8 @@ function loadTasks() {
     tasks.forEach(t => {
         if (!t.tags) t.tags = [];
         if (!t.dueDate) t.dueDate = '';
+        if (!t.description) t.description = '';
+        if (!t.priority) t.priority = 'low';
         t.editing = false;
     });
 }
@@ -26,6 +35,17 @@ function saveTasks() {
     localStorage.setItem('tasks', JSON.stringify(data));
 }
 
+function getPriorityInfo(level) {
+    switch (level) {
+        case 'high':
+            return { icon: '🚨', color: 'red' };
+        case 'medium':
+            return { icon: '⚠️', color: 'orange' };
+        default:
+            return { icon: '🟢', color: 'green' };
+    }
+}
+
 function createTaskElement(task) {
     const li = document.createElement('li');
     li.className = 'task-item';
@@ -33,6 +53,10 @@ function createTaskElement(task) {
 
     const header = document.createElement('div');
     header.className = 'task-header';
+
+    const dueSpan = document.createElement('span');
+    dueSpan.className = 'due-date';
+    updateDueDateSpan(dueSpan, task);
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -44,17 +68,48 @@ function createTaskElement(task) {
     });
 
     let textSpan;
+    let descElement;
+    let priorityElement;
     if (task.editing) {
         const input = document.createElement('input');
         input.type = 'text';
         input.className = 'edit-input';
         input.value = task.text;
+
+        const descInput = document.createElement('textarea');
+        descInput.className = 'edit-description';
+        descInput.value = task.description || '';
+
+        const select = document.createElement('select');
+        select.className = 'priority-select';
+        ['low', 'medium', 'high'].forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p.charAt(0).toUpperCase() + p.slice(1);
+            if (task.priority === p) opt.selected = true;
+            select.appendChild(opt);
+        });
+
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+
         const finishEditing = () => {
             task.text = input.value.trim();
+            task.description = descInput.value.trim();
+            task.priority = select.value;
             task.editing = false;
             saveTasks();
             renderTasks(currentFilter);
         };
+
+        saveBtn.addEventListener('click', finishEditing);
+        cancelBtn.addEventListener('click', () => {
+            task.editing = false;
+            renderTasks(currentFilter);
+        });
+
         input.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 finishEditing();
@@ -63,13 +118,13 @@ function createTaskElement(task) {
                 renderTasks(currentFilter);
             }
         });
-        input.addEventListener('blur', e => {
-            // Only finish editing if the newly focused element is outside this task
-            if (!li.contains(e.relatedTarget)) {
-                finishEditing();
-            }
-        });
+
         textSpan = input;
+        priorityElement = select;
+        descElement = descInput;
+        header.append(checkbox, textSpan, priorityElement, dueSpan, saveBtn, cancelBtn);
+        li.appendChild(header);
+        li.appendChild(descElement);
     } else {
         textSpan = document.createElement('span');
         textSpan.className = 'text';
@@ -78,14 +133,21 @@ function createTaskElement(task) {
             e.stopPropagation();
             startEditing(task);
         });
+
+        const priInfo = getPriorityInfo(task.priority);
+        priorityElement = document.createElement('span');
+        priorityElement.className = 'priority';
+        priorityElement.textContent = priInfo.icon;
+        priorityElement.style.color = priInfo.color;
+
+        descElement = document.createElement('div');
+        descElement.className = 'description';
+        descElement.textContent = task.description;
+
+        header.append(checkbox, textSpan, priorityElement, dueSpan);
+        li.appendChild(header);
+        if (task.description) li.appendChild(descElement);
     }
-
-    const dueSpan = document.createElement('span');
-    dueSpan.className = 'due-date';
-    updateDueDateSpan(dueSpan, task);
-
-    header.append(checkbox, textSpan, dueSpan);
-
     const tagsDiv = document.createElement('div');
     tagsDiv.className = 'tags';
     task.tags.forEach(tag => addTagElement(tag, tagsDiv, task));
@@ -121,7 +183,6 @@ function createTaskElement(task) {
 
     actions.append(tagBtn, dateBtn, deleteBtn);
 
-    li.appendChild(header);
     li.appendChild(tagsDiv);
     li.appendChild(actions);
 
@@ -265,8 +326,17 @@ function renderTasks(filter = 'all') {
 addTaskBtn.addEventListener('click', () => {
     const text = taskInput.value.trim();
     if (text) {
-        tasks.push({ text, completed: false, tags: [], dueDate: '', editing: false });
+        tasks.push({
+            text,
+            completed: false,
+            tags: [],
+            dueDate: '',
+            description: newDescription.value.trim(),
+            priority: 'low',
+            editing: false
+        });
         taskInput.value = '';
+        newDescription.value = '';
         saveTasks();
         renderTasks(currentFilter);
     }
@@ -276,8 +346,17 @@ taskInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
         const text = taskInput.value.trim();
         if (text) {
-            tasks.push({ text, completed: false, tags: [], dueDate: '', editing: false });
+            tasks.push({
+                text,
+                completed: false,
+                tags: [],
+                dueDate: '',
+                description: newDescription.value.trim(),
+                priority: 'low',
+                editing: false
+            });
             taskInput.value = '';
+            newDescription.value = '';
             saveTasks();
             renderTasks(currentFilter);
         }
