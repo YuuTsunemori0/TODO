@@ -12,7 +12,7 @@ const addNewTagBtn = document.getElementById('add-new-tag');
 
 let newTags = [];
 
-// Firebase configuration (replace with your project's settings)
+// Firebase configuration 
 const firebaseConfig = {
     apiKey: "AIzaSyAhvBttl3n7SqU9rDeGIZTrdspnwoVm6f4",
     authDomain: "to-do-list-d31a1.firebaseapp.com",
