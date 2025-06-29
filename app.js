@@ -53,11 +53,19 @@ window.login = async function () {
 };
 
 window.logout = async function () {
-    await saveTasks();
-    await signOut(auth);
-    tasks = [];
-    renderTasks(currentFilter);
-    alert('Déconnecté !');
+    try {
+        await saveTasks();
+    } catch (error) {
+        console.error('Failed to save tasks before logout:', error);
+    }
+    try {
+        await signOut(auth);
+        tasks = [];
+        renderTasks(currentFilter);
+        alert('Déconnecté !');
+    } catch (error) {
+        alert('Erreur lors de la déconnexion: ' + error.message);
+    }
 };
 
 onAuthStateChanged(auth, async user => {
