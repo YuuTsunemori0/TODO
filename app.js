@@ -48,7 +48,10 @@ window.login = async function () {
 };
 
 window.logout = async function () {
+    await saveTasks();
     await signOut(auth);
+    tasks = [];
+    renderTasks(currentFilter);
     alert('Déconnecté !');
 };
 
@@ -482,6 +485,10 @@ function renderTasks(filter = 'all') {
 }
 
 addTaskBtn.addEventListener('click', () => {
+    if (!currentUser) {
+        alert('Please log in to add tasks');
+        return;
+    }
     const text = taskInput.value.trim();
     if (text) {
         tasks.push({
@@ -508,6 +515,10 @@ addTaskBtn.addEventListener('click', () => {
 
 taskInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
+        if (!currentUser) {
+            alert('Please log in to add tasks');
+            return;
+        }
         const text = taskInput.value.trim();
         if (text) {
             tasks.push({
