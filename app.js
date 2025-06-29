@@ -71,6 +71,10 @@ addNewTagBtn.addEventListener('click', e => {
 
 let tasks = [];
 
+function updateTimestamp(task) {
+    task.updatedAt = new Date().toISOString();
+}
+
 toggleOptionsBtn.addEventListener('click', () => {
     optionsDiv.classList.toggle('hidden');
 });
@@ -89,6 +93,8 @@ async function loadTasks() {
         if (!t.dueDate) t.dueDate = '';
         if (!t.description) t.description = '';
         if (!t.priority) t.priority = 'low';
+        if (!t.createdAt) t.createdAt = new Date().toISOString();
+        if (!t.updatedAt) t.updatedAt = t.createdAt;
         t.editing = false;
     });
 }
@@ -130,6 +136,7 @@ function createTaskElement(task) {
     checkbox.checked = task.completed;
     checkbox.addEventListener('change', () => {
         task.completed = checkbox.checked;
+        updateTimestamp(task);
         saveTasks();
         renderTasks(currentFilter);
     });
@@ -167,6 +174,7 @@ function createTaskElement(task) {
             task.description = descInput.value.trim();
             task.priority = select.value;
             task.editing = false;
+            updateTimestamp(task);
             saveTasks();
             renderTasks(currentFilter);
         };
@@ -279,6 +287,7 @@ function addTagElement(tag, container, task) {
     remove.addEventListener('click', e => {
         e.stopPropagation();
         task.tags = task.tags.filter(t => t !== tag);
+        updateTimestamp(task);
         saveTasks();
         renderTasks(currentFilter);
     });
@@ -310,6 +319,7 @@ function openTagSelector(task, container) {
         const label = input.value.trim();
         if (label) {
             task.tags.push({ label, color: color.value });
+            updateTimestamp(task);
             saveTasks();
             renderTasks(currentFilter);
         }
@@ -367,6 +377,7 @@ function openDatePicker(task, span) {
     input.value = task.dueDate || '';
     input.addEventListener('change', () => {
         task.dueDate = input.value;
+        updateTimestamp(task);
         saveTasks();
         renderTasks(currentFilter);
     });
@@ -480,6 +491,8 @@ addTaskBtn.addEventListener('click', () => {
             dueDate: newDueDate.value,
             description: newDescription.value.trim(),
             priority: newPriority.value,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             editing: false
         });
         taskInput.value = '';
@@ -504,6 +517,8 @@ taskInput.addEventListener('keydown', e => {
                 dueDate: newDueDate.value,
                 description: newDescription.value.trim(),
                 priority: newPriority.value,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
                 editing: false
             });
             taskInput.value = '';

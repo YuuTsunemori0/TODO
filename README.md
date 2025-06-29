@@ -10,7 +10,8 @@ This project is a simple to-do list web application.
 - Add colored tags to tasks.
 - Set optional due dates with a calendar picker.
 - Filter tasks by status: all, to-do or completed.
-- Tasks are stored in `localStorage` so they persist after the browser is closed.
+- Tasks persist in Firebase Firestore for each authenticated user.
+- Each task records creation and last modification timestamps.
 
 ## Usage
 
