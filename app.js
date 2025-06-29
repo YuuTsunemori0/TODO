@@ -10,6 +10,11 @@ const newDueDate = document.getElementById('new-due-date');
 const newTagsDiv = document.getElementById('new-tags');
 const addNewTagBtn = document.getElementById('add-new-tag');
 
+const loginForm = document.getElementById('login-form');
+const userInfo = document.getElementById('user-info');
+const userEmailSpan = document.getElementById('user-email');
+const todoApp = document.getElementById('todo-app');
+
 let newTags = [];
 
 // Firebase
@@ -58,11 +63,19 @@ window.logout = async function () {
 onAuthStateChanged(auth, async user => {
     if (user) {
         currentUser = user;
+        userEmailSpan.textContent = user.email;
+        loginForm.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        todoApp.classList.remove('hidden');
         await loadTasks();
         renderTasks(currentFilter);
     } else {
         currentUser = null;
         tasks = [];
+        userEmailSpan.textContent = '';
+        userInfo.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+        todoApp.classList.add('hidden');
         renderTasks(currentFilter);
     }
 });
