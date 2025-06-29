@@ -15,3 +15,10 @@ This project is a simple to-do list web application.
 ## Usage
 
 Open `index.html` in a web browser. No additional build step is required.
+
+## Analytics
+
+This project now includes Firebase Analytics initialization in
+`firebaseConfig.js` with the measurement ID `G-4N6RYDDYKC`.
+If you would like to use your own Analytics property, replace this ID in the
+configuration file with the one from your Firebase console.
