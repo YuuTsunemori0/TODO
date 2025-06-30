@@ -2,6 +2,7 @@
     --radius: 16px;
     --shadow: 0 4px 12px rgba(0,0,0,0.1);
     --panel-bg: rgba(255,255,255,0.6);
+    --card-bg: #fff;
     --bg: #f5f5f5;
     --text: #111;
     --transition: 0.2s ease-in-out;
@@ -11,6 +12,7 @@
 @media (prefers-color-scheme: dark) {
     :root {
         --panel-bg: rgba(40,40,40,0.6);
+        --card-bg: #2b2b2b;
         --bg: #1c1c1c;
         --text: #fafafa;
         --shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -33,6 +35,26 @@ body {
     border-radius: var(--radius);
     backdrop-filter: blur(20px);
     transition: background var(--transition), box-shadow var(--transition);
+}
+
+.app-header {
+    position: sticky;
+    top: 0;
+    background: var(--panel-bg);
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+}
+
+.app-header h1 {
+    margin: 0;
+    font-weight: 600;
 }
 .input-group {
     display: flex;
@@ -85,9 +107,8 @@ button:focus {
     align-items: flex-start;
     padding: 12px;
     margin-bottom: 12px;
-    background: var(--panel-bg);
-    backdrop-filter: blur(10px);
-    border-radius: var(--radius);
+    background: var(--card-bg);
+    border-radius: 12px;
     box-shadow: var(--shadow);
     transition: box-shadow var(--transition), transform var(--transition);
 }
@@ -127,9 +148,10 @@ button:focus {
 .tag {
     display: inline-block;
     padding: 2px 6px;
-    border-radius: 10px;
+    border-radius: 999px;
     margin-right: 4px;
     color: #fff;
+    font-weight: bold;
     font-size: 12px;
 }
 .remove-tag {
@@ -137,6 +159,23 @@ button:focus {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+}
+.avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ccc;
+    color: #fff;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+}
+
+.metadata {
+    font-size: 12px;
+    margin-top: 4px;
 }
 .due-date {
     margin-left: 10px;
@@ -218,6 +257,8 @@ button:focus {
 }
 
 .category-column {
+    display: flex;
+    flex-direction: column;
     background: var(--panel-bg);
     padding: 10px;
     min-width: 200px;
@@ -242,6 +283,17 @@ button:focus {
     list-style: none;
     padding: 0;
     margin-top: 10px;
+}
+
+.add-task-column {
+    align-self: center;
+    margin-top: 10px;
+    background: transparent;
+    color: var(--text);
+}
+
+.add-task-column:hover {
+    background: var(--panel-bg);
 }
 
 .category-btn {

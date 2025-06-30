@@ -143,6 +143,7 @@ async function loadTasks() {
         if (!t.createdAt) t.createdAt = new Date().toISOString();
         if (!t.updatedAt) t.updatedAt = t.createdAt;
         if (!t.category) t.category = 'Uncategorized';
+        if (!t.assignee) t.assignee = currentUser ? currentUser.email : '';
         if (!t.id) t.id = generateId();
         t.editing = false;
     });
@@ -175,6 +176,10 @@ function createTaskElement(task) {
 
     const header = document.createElement('div');
     header.className = 'task-header';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = task.assignee ? task.assignee[0].toUpperCase() : '?';
 
     const dueSpan = document.createElement('span');
     dueSpan.className = 'due-date';
@@ -246,7 +251,7 @@ function createTaskElement(task) {
         textSpan = input;
         priorityElement = select;
         descElement = descInput;
-        header.append(checkbox, textSpan, priorityElement, dueSpan, saveBtn, cancelBtn);
+        header.append(checkbox, avatar, textSpan, priorityElement, saveBtn, cancelBtn);
         li.appendChild(header);
         li.appendChild(descElement);
     } else {
@@ -270,7 +275,7 @@ function createTaskElement(task) {
         descElement.className = 'description';
         descElement.textContent = task.description;
 
-        header.append(checkbox, textSpan, priorityElement, dueSpan);
+        header.append(checkbox, avatar, textSpan, priorityElement);
         li.appendChild(header);
         if (task.description) li.appendChild(descElement);
     }
@@ -309,7 +314,12 @@ function createTaskElement(task) {
 
     actions.append(tagBtn, dateBtn, deleteBtn);
 
+    const meta = document.createElement('div');
+    meta.className = 'metadata';
+    meta.appendChild(dueSpan);
+
     li.appendChild(tagsDiv);
+    li.appendChild(meta);
     li.appendChild(actions);
 
     li.addEventListener('click', () => {
@@ -540,6 +550,7 @@ function renderBoard(filter = 'all') {
         }
 
         const addBtn = document.createElement('button');
+        addBtn.className = 'add-task-column';
         addBtn.innerHTML = '<i data-feather="plus" class="button-icon"></i> Add task';
         addBtn.addEventListener('click', () => {
             const text = prompt('Task name');
@@ -555,7 +566,8 @@ function renderBoard(filter = 'all') {
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                     editing: false,
-                    category: cat
+                    category: cat,
+                    assignee: currentUser ? currentUser.email : ''
                 });
                 saveTasks();
                 renderBoard(currentFilter);
@@ -590,8 +602,8 @@ function renderBoard(filter = 'all') {
         });
 
         column.appendChild(header);
-        column.appendChild(addBtn);
         column.appendChild(ul);
+        column.appendChild(addBtn);
         board.appendChild(column);
     });
 
@@ -622,7 +634,8 @@ addTaskBtn.addEventListener('click', () => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             editing: false,
-            category: 'Uncategorized'
+            category: 'Uncategorized',
+            assignee: currentUser ? currentUser.email : ''
         });
         taskInput.value = '';
         newDescription.value = '';
@@ -654,7 +667,8 @@ taskInput.addEventListener('keydown', e => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 editing: false,
-                category: 'Uncategorized'
+                category: 'Uncategorized',
+                assignee: currentUser ? currentUser.email : ''
             });
             taskInput.value = '';
             newDescription.value = '';
