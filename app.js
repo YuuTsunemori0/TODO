@@ -1,6 +1,7 @@
 const taskInput = document.getElementById('new-task');
 const addTaskBtn = document.getElementById('add-task');
-const taskList = document.getElementById('task-list');
+const board = document.getElementById('board');
+const addCategoryBtn = document.getElementById('add-category');
 const filterButtons = document.querySelectorAll('.filter');
 const toggleOptionsBtn = document.getElementById('toggle-options');
 const optionsDiv = document.getElementById('task-options');
@@ -61,7 +62,7 @@ window.logout = async function () {
     try {
         await signOut(auth);
         tasks = [];
-        renderTasks(currentFilter);
+        renderBoard(currentFilter);
         alert('Déconnecté !');
     } catch (error) {
         alert('Erreur lors de la déconnexion: ' + error.message);
@@ -76,7 +77,7 @@ onAuthStateChanged(auth, async user => {
         userInfo.classList.remove('hidden');
         todoApp.classList.remove('hidden');
         await loadTasks();
-        renderTasks(currentFilter);
+        renderBoard(currentFilter);
     } else {
         currentUser = null;
         tasks = [];
@@ -84,7 +85,7 @@ onAuthStateChanged(auth, async user => {
         userInfo.classList.add('hidden');
         loginForm.classList.remove('hidden');
         todoApp.classList.add('hidden');
-        renderTasks(currentFilter);
+        renderBoard(currentFilter);
     }
 });
 
@@ -94,9 +95,29 @@ addNewTagBtn.addEventListener('click', e => {
 });
 
 let tasks = [];
+let categories = ['Uncategorized'];
 
 function updateTimestamp(task) {
     task.updatedAt = new Date().toISOString();
+}
+
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function deleteCategory(name) {
+    categories = categories.filter(c => c !== name);
+    tasks.forEach(t => {
+        if (t.category === name) t.category = 'Uncategorized';
+    });
+    saveTasks();
+    renderBoard(currentFilter);
+}
+
+function addCategory(name) {
+    categories.push(name);
+    saveTasks();
+    renderBoard(currentFilter);
 }
 
 toggleOptionsBtn.addEventListener('click', () => {
@@ -109,8 +130,10 @@ async function loadTasks() {
     const snap = await getDoc(doc(db, 'users', currentUser.uid));
     if (snap.exists()) {
         tasks = snap.data().items || [];
+        categories = snap.data().categories || ['Uncategorized'];
     } else {
         tasks = [];
+        categories = ['Uncategorized'];
     }
     tasks.forEach(t => {
         if (!t.tags) t.tags = [];
@@ -119,6 +142,8 @@ async function loadTasks() {
         if (!t.priority) t.priority = 'low';
         if (!t.createdAt) t.createdAt = new Date().toISOString();
         if (!t.updatedAt) t.updatedAt = t.createdAt;
+        if (!t.category) t.category = 'Uncategorized';
+        if (!t.id) t.id = generateId();
         t.editing = false;
     });
 }
@@ -129,7 +154,7 @@ function saveTasks() {
         const { editing, ...rest } = t;
         return rest;
     });
-    return setDoc(doc(db, 'users', currentUser.uid), { items: data });
+    return setDoc(doc(db, 'users', currentUser.uid), { items: data, categories });
 }
 
 function getPriorityInfo(level) {
@@ -162,7 +187,7 @@ function createTaskElement(task) {
         task.completed = checkbox.checked;
         updateTimestamp(task);
         saveTasks();
-        renderTasks(currentFilter);
+        renderBoard(currentFilter);
     });
 
     let textSpan;
@@ -200,13 +225,13 @@ function createTaskElement(task) {
             task.editing = false;
             updateTimestamp(task);
             saveTasks();
-            renderTasks(currentFilter);
+            renderBoard(currentFilter);
         };
 
         saveBtn.addEventListener('click', finishEditing);
         cancelBtn.addEventListener('click', () => {
             task.editing = false;
-            renderTasks(currentFilter);
+            renderBoard(currentFilter);
         });
 
         input.addEventListener('keydown', e => {
@@ -214,7 +239,7 @@ function createTaskElement(task) {
                 finishEditing();
             } else if (e.key === 'Escape') {
                 task.editing = false;
-                renderTasks(currentFilter);
+                renderBoard(currentFilter);
             }
         });
 
@@ -277,7 +302,7 @@ function createTaskElement(task) {
         e.stopPropagation();
         tasks = tasks.filter(t => t !== task);
         saveTasks();
-        renderTasks(currentFilter);
+        renderBoard(currentFilter);
     });
 
     actions.append(tagBtn, dateBtn, deleteBtn);
@@ -294,8 +319,8 @@ function createTaskElement(task) {
 function startEditing(task) {
     tasks.forEach(t => t.editing = false);
     task.editing = true;
-    renderTasks(currentFilter);
-    const input = taskList.querySelector('.edit-input');
+    renderBoard(currentFilter);
+    const input = board.querySelector('.edit-input');
     if (input) input.focus();
 }
 
@@ -313,7 +338,7 @@ function addTagElement(tag, container, task) {
         task.tags = task.tags.filter(t => t !== tag);
         updateTimestamp(task);
         saveTasks();
-        renderTasks(currentFilter);
+        renderBoard(currentFilter);
     });
     span.appendChild(remove);
     container.appendChild(span);
@@ -345,7 +370,7 @@ function openTagSelector(task, container) {
             task.tags.push({ label, color: color.value });
             updateTimestamp(task);
             saveTasks();
-            renderTasks(currentFilter);
+            renderBoard(currentFilter);
         }
         wrapper.remove();
     };
@@ -403,7 +428,7 @@ function openDatePicker(task, span) {
         task.dueDate = input.value;
         updateTimestamp(task);
         saveTasks();
-        renderTasks(currentFilter);
+        renderBoard(currentFilter);
     });
     input.addEventListener('blur', () => input.remove());
     span.appendChild(input);
@@ -490,18 +515,87 @@ function openNewTagSelector() {
     input.focus();
 }
 
-function renderTasks(filter = 'all') {
-    taskList.innerHTML = '';
-    tasks.forEach(task => {
-        if (filter === 'active' && task.completed) return;
-        if (filter === 'completed' && !task.completed) return;
-        const li = createTaskElement(task);
-        taskList.appendChild(li);
+function renderBoard(filter = 'all') {
+    board.innerHTML = '';
+    categories.forEach(cat => {
+        const column = document.createElement('div');
+        column.className = 'category-column';
+        column.dataset.category = cat;
+
+        const header = document.createElement('h3');
+        header.textContent = cat;
+        if (cat !== 'Uncategorized') {
+            const del = document.createElement('span');
+            del.className = 'delete-category';
+            del.textContent = '×';
+            del.addEventListener('click', e => {
+                e.stopPropagation();
+                deleteCategory(cat);
+            });
+            header.appendChild(del);
+        }
+
+        const addBtn = document.createElement('button');
+        addBtn.textContent = 'Add task';
+        addBtn.addEventListener('click', () => {
+            const text = prompt('Task name');
+            if (text) {
+                tasks.push({
+                    id: generateId(),
+                    text,
+                    completed: false,
+                    tags: [],
+                    dueDate: '',
+                    description: '',
+                    priority: 'low',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    editing: false,
+                    category: cat
+                });
+                saveTasks();
+                renderBoard(currentFilter);
+            }
+        });
+
+        const ul = document.createElement('ul');
+        tasks.forEach(task => {
+            if (task.category !== cat) return;
+            if (filter === 'active' && task.completed) return;
+            if (filter === 'completed' && !task.completed) return;
+            const li = createTaskElement(task);
+            li.draggable = true;
+            li.dataset.id = task.id;
+            li.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/plain', task.id);
+            });
+            ul.appendChild(li);
+        });
+
+        column.addEventListener('dragover', e => e.preventDefault());
+        column.addEventListener('drop', e => {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const t = tasks.find(tt => tt.id === id);
+            if (t && t.category !== cat) {
+                t.category = cat;
+                updateTimestamp(t);
+                saveTasks();
+                renderBoard(currentFilter);
+            }
+        });
+
+        column.appendChild(header);
+        column.appendChild(addBtn);
+        column.appendChild(ul);
+        board.appendChild(column);
     });
+
     filterButtons.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.filter === filter);
     });
-    const input = taskList.querySelector('.edit-input');
+
+    const input = board.querySelector('.edit-input');
     if (input) input.focus();
 }
 
@@ -513,6 +607,7 @@ addTaskBtn.addEventListener('click', () => {
     const text = taskInput.value.trim();
     if (text) {
         tasks.push({
+            id: generateId(),
             text,
             completed: false,
             tags: [...newTags],
@@ -521,7 +616,8 @@ addTaskBtn.addEventListener('click', () => {
             priority: newPriority.value,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            editing: false
+            editing: false,
+            category: 'Uncategorized'
         });
         taskInput.value = '';
         newDescription.value = '';
@@ -530,7 +626,7 @@ addTaskBtn.addEventListener('click', () => {
         newTags = [];
         updateNewTagDisplay();
         saveTasks();
-        renderTasks(currentFilter);
+        renderBoard(currentFilter);
     }
 });
 
@@ -543,6 +639,7 @@ taskInput.addEventListener('keydown', e => {
         const text = taskInput.value.trim();
         if (text) {
             tasks.push({
+                id: generateId(),
                 text,
                 completed: false,
                 tags: [...newTags],
@@ -551,7 +648,8 @@ taskInput.addEventListener('keydown', e => {
                 priority: newPriority.value,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
-                editing: false
+                editing: false,
+                category: 'Uncategorized'
             });
             taskInput.value = '';
             newDescription.value = '';
@@ -560,7 +658,7 @@ taskInput.addEventListener('keydown', e => {
             newTags = [];
             updateNewTagDisplay();
             saveTasks();
-            renderTasks(currentFilter);
+            renderBoard(currentFilter);
         }
     }
 });
@@ -569,7 +667,14 @@ let currentFilter = 'all';
 filterButtons.forEach(btn => {
     btn.addEventListener('click', () => {
         currentFilter = btn.dataset.filter;
-        renderTasks(currentFilter);
+        renderBoard(currentFilter);
     });
+});
+
+addCategoryBtn.addEventListener('click', () => {
+    const name = prompt('Category name');
+    if (name && !categories.includes(name)) {
+        addCategory(name);
+    }
 });
 
