@@ -160,11 +160,11 @@ function saveTasks() {
 function getPriorityInfo(level) {
     switch (level) {
         case 'high':
-            return { icon: '🚨', color: 'red' };
+            return { icon: 'alert-circle', color: 'red' };
         case 'medium':
-            return { icon: '⚠️', color: 'orange' };
+            return { icon: 'alert-triangle', color: 'orange' };
         default:
-            return { icon: '🟢', color: 'green' };
+            return { icon: 'check-circle', color: 'green' };
     }
 }
 
@@ -261,8 +261,10 @@ function createTaskElement(task) {
         const priInfo = getPriorityInfo(task.priority);
         priorityElement = document.createElement('span');
         priorityElement.className = 'priority';
-        priorityElement.textContent = priInfo.icon;
-        priorityElement.style.color = priInfo.color;
+        const priIcon = document.createElement('i');
+        priIcon.setAttribute('data-feather', priInfo.icon);
+        priIcon.style.color = priInfo.color;
+        priorityElement.appendChild(priIcon);
 
         descElement = document.createElement('div');
         descElement.className = 'description';
@@ -281,7 +283,7 @@ function createTaskElement(task) {
 
     const tagBtn = document.createElement('button');
     tagBtn.className = 'tag-btn';
-    tagBtn.textContent = '+ Tag';
+    tagBtn.innerHTML = '<i data-feather="tag" class="button-icon"></i> Tag';
     tagBtn.addEventListener('click', e => {
         e.stopPropagation();
         openTagSelector(task, tagsDiv);
@@ -289,7 +291,7 @@ function createTaskElement(task) {
 
     const dateBtn = document.createElement('button');
     dateBtn.className = 'date-btn';
-    dateBtn.textContent = '📅';
+    dateBtn.innerHTML = '<i data-feather="calendar" class="button-icon"></i>';
     dateBtn.addEventListener('click', e => {
         e.stopPropagation();
         openDatePicker(task, dueSpan);
@@ -297,7 +299,7 @@ function createTaskElement(task) {
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'delete-btn';
-    deleteBtn.textContent = '🗑';
+    deleteBtn.innerHTML = '<i data-feather="trash-2" class="button-icon"></i>';
     deleteBtn.addEventListener('click', e => {
         e.stopPropagation();
         tasks = tasks.filter(t => t !== task);
@@ -332,7 +334,7 @@ function addTagElement(tag, container, task) {
 
     const remove = document.createElement('span');
     remove.className = 'remove-tag';
-    remove.textContent = '×';
+    remove.innerHTML = '<i data-feather="x" class="button-icon"></i>';
     remove.addEventListener('click', e => {
         e.stopPropagation();
         task.tags = task.tags.filter(t => t !== tag);
@@ -444,7 +446,7 @@ function updateNewTagDisplay() {
         span.textContent = tag.label;
         const remove = document.createElement('span');
         remove.className = 'remove-tag';
-        remove.textContent = '×';
+        remove.innerHTML = '<i data-feather="x" class="button-icon"></i>';
         remove.addEventListener('click', () => {
             newTags = newTags.filter(t => t !== tag);
             updateNewTagDisplay();
@@ -527,7 +529,9 @@ function renderBoard(filter = 'all') {
         if (cat !== 'Uncategorized') {
             const del = document.createElement('span');
             del.className = 'delete-category';
-            del.textContent = '×';
+            const delIcon = document.createElement('i');
+            delIcon.setAttribute('data-feather', 'x');
+            del.appendChild(delIcon);
             del.addEventListener('click', e => {
                 e.stopPropagation();
                 deleteCategory(cat);
@@ -536,7 +540,7 @@ function renderBoard(filter = 'all') {
         }
 
         const addBtn = document.createElement('button');
-        addBtn.textContent = 'Add task';
+        addBtn.innerHTML = '<i data-feather="plus" class="button-icon"></i> Add task';
         addBtn.addEventListener('click', () => {
             const text = prompt('Task name');
             if (text) {
@@ -597,6 +601,7 @@ function renderBoard(filter = 'all') {
 
     const input = board.querySelector('.edit-input');
     if (input) input.focus();
+    if (window.feather) feather.replace();
 }
 
 addTaskBtn.addEventListener('click', () => {
